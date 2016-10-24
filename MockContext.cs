@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BlackBarLabs.Core.Collections;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -74,16 +75,16 @@ namespace BlackBarLabs.Security.SessionClient
 
         private static string GetToken(Guid authId)
         {
-            var claimsDefault = (IEnumerable<Claim>)new[] {
-                new Claim(ClaimIds.Session, Guid.NewGuid().ToString()),
-                new Claim(ClaimIds.Authorization, authId.ToString()) };
             var claims = MockContext.claims
                 .Where(claim => claim.Value.Item1 == authId)
-                .Select(claim => new System.Security.Claims.Claim(claim.Value.Item2.AbsoluteUri, claim.Value.Item3))
-                .Concat(claimsDefault);
-            var jwtToken = BlackBarLabs.Security.Tokens.JwtTools.CreateToken(Guid.NewGuid().ToString(),
-                DateTimeOffset.UtcNow, DateTimeOffset.UtcNow + TimeSpan.FromDays(1.0),
+                .Select(claim => new KeyValuePair<string, string>(claim.Value.Item2.AbsoluteUri, claim.Value.Item3))
+                .ToDictionary();
+            var jwtToken = Tokens.JwtTools.CreateToken(Guid.NewGuid(), authId, new Uri("http://example.com"),
+                TimeSpan.FromDays(1.0),
                 claims,
+                (token) => token,
+                (why) => string.Empty,
+                (why, what) => string.Empty,
                 "AuthServer.issuer",
                 "AuthServer.key");
             return jwtToken;

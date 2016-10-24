@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using BlackBarLabs.Core.Web;
 using BlackBarLabs.Security.Session;
 using Microsoft.Azure;
+using BlackBarLabs.Core.Extensions;
 
 namespace BlackBarLabs.Security.SessionClient
 {
@@ -98,20 +99,26 @@ namespace BlackBarLabs.Security.SessionClient
             TimeSpan voucherDuration,
             CreateVoucherDelegate<T> onSuccess, Func<string, T> onFailure)
         {
-            var token = BlackBarLabs.Security.Tokens.VoucherTools.GenerateToken(authId, DateTime.UtcNow + voucherDuration);
-            var credentialVoucher = new Credential
-            {
-                AuthorizationId = authId,
-                Method = CredentialValidationMethodTypes.Voucher,
-                Provider = providerId,
-                Token = token,
-                UserId = authId.ToString("N"),
-            };
-            var webRequest = GetRequest();
-            return await webRequest.PostAsync(credentialVoucher,
-                (response) => onSuccess(token),
-                (code, response) => onFailure(response),
-                (whyFailed) => onFailure(whyFailed));
+            var result = await Tokens.VoucherTools.GenerateToken(authId, DateTime.UtcNow + voucherDuration,
+                async (token) =>
+                {
+                    var credentialVoucher = new Credential
+                    {
+                        AuthorizationId = authId,
+                        Method = CredentialValidationMethodTypes.Voucher,
+                        Provider = providerId,
+                        Token = token,
+                        UserId = authId.ToString("N"),
+                    };
+                    var webRequest = GetRequest();
+                    return await webRequest.PostAsync(credentialVoucher,
+                        (response) => onSuccess(token),
+                        (code, response) => onFailure(response),
+                        (whyFailed) => onFailure(whyFailed));
+                },
+                (setting) => onFailure("Server missing configuration setting:" + setting).ToTask(),
+                (setting, issue) => onFailure("Server misconfigured:\nsetting:" + setting + "\nissue:" + issue).ToTask());
+            return result;
         }
     }
 }
