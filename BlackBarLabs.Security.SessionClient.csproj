@@ -81,10 +81,6 @@
       <Project>{73088f1b-3aca-476b-aa45-b7d6660f1c73}</Project>
       <Name>BlackBarLabs.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\BlackBarLabs.Security.Session\BlackBarLabs.Security.Session.csproj">
-      <Project>{31c1c7f3-4f14-42bd-a90d-6b984e3643c4}</Project>
-      <Name>BlackBarLabs.Security.Session</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
